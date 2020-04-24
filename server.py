@@ -52,7 +52,7 @@ def makeUser():
     except Exception as e:
         return(str(e))
 
-@app.route('/user/<id>/addPoints/', methods=["POST"])
+@app.route('/user/<id>/addPoints', methods=["POST"])
 def addPoints(id):
     if not request.json:
         return abort(400)
@@ -69,6 +69,56 @@ def addPoints(id):
         return jsonify(user.serialize())
     except Exception as e:
         return(str(e))
+
+@app.route('/trashAll/', methods=["GET"])
+def getAllTrash():
+    trash = Trash.query.all()
+    return jsonify([t.serialize() for t in trash])
+
+@app.route('/trash', methods=["POST"])
+def createTrash():
+    if not request.json:
+        return abort(400)
+
+    params = ['trash_type', 'latitude', 'longitude']
+
+    for p in params:
+        if p not in request.json:
+            return abort(400)
+
+    trash_type = request.json['trash_type']
+    latitude = request.json['latitude']
+    longitude = request.json['longitude']
+
+    try:
+        trash = Trash(
+            trash_type = trash_type,
+            latitude = latitude,
+            longitude = longitude
+        )
+        db.session.add(trash)
+        db.session.commit()
+        return jsonify(trash.serialize())
+    except Exception as e:
+        return(str(e))
+
+@app.route('/trash/<id>', methods=["DELETE"])
+def removeTrash(id):    
+    try:
+        trash = Trash.query.filter_by(id = id).first()
+        db.session.delete(trash)
+        db.session.commit()
+        return jsonify(trash.serialize())
+    except Exception as e:
+        return(str(e))
+
+@app.route('/trashScan', methods=["POST"])
+def scanTrash():
+    # get image, longitude, latitude from request
+    # get all instances of trash in the image
+    # crop all instances of trash and classify what type of trash it is
+    # add all the trash to the db
+    return 'todo'
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

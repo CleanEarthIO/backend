@@ -36,9 +36,9 @@ class Trash(db.Model):
     longitude = db.Column(db.Float)
 
     def __init__(self, trash_type, latitude, longitude):
-        self.trash_type = email
-        self.latitude = name
-        self.longitude = password
+        self.trash_type = trash_type
+        self.latitude = latitude
+        self.longitude = longitude
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
