@@ -9,6 +9,7 @@ from six.moves.urllib.parse import urlencode
 from authlib.integrations.flask_client import OAuth
 from app import create_app, db
 from models import User, Trash, Event, EventUsers
+from flask_cors import CORS
 
 import os
 from datetime import datetime
@@ -17,7 +18,7 @@ from dotenv import load_dotenv
 load_dotenv('.env')
 
 app = create_app()
-
+cors = CORS(app, resources={r"*": {"origins": "*"}})
 oauth = OAuth(app)
 
 auth0 = oauth.register(
@@ -176,6 +177,7 @@ def get_events():
     events = Event.query.all()
     return jsonify([e.serialize() for e in events])
 
+
 @app.route('/event', methods=["POST"])
 def create_event():
     if not request.json:
@@ -193,52 +195,55 @@ def create_event():
     leader_id = request.json['leader_id']
 
     try:
-        leader = User.query.filter_by(id = leader_id).first()
+        leader = User.query.filter_by(id=leader_id).first()
     except Exception:
         return 'Leader not found'
 
     try:
         event = Event(
-            latitude = latitude,
-            longitude = longitude,
-            date = datetime.strptime(date, '%Y-%m-%d %H:%M'),
-            leader_id = leader_id
+            latitude=latitude,
+            longitude=longitude,
+            date=datetime.strptime(date, '%Y-%m-%d %H:%M'),
+            leader_id=leader_id
         )
 
         db.session.add(event)
         db.session.commit()
 
         eventuser = EventUsers(
-            user_id = leader_id,
-            event_id = event.id
+            user_id=leader_id,
+            event_id=event.id
         )
         db.session.add(eventuser)
         db.session.commit()
 
         return jsonify(event.serialize())
     except Exception as e:
-        return(str(e))
+        return str(e)
+
 
 @app.route('/event/<id>/', methods=["GET"])
 def get_event(id):
     try:
-        event = Event.query.filter_by(id = id).first()
+        event = Event.query.filter_by(id=id).first()
         return jsonify(event.serialize())
     except Exception:
         return 'Event not found'
 
-@app.route('/event/<id>', methods=["DELETE"])
-def delete_event(id):
+
+@app.route('/event/<event_id>', methods=["DELETE"])
+def delete_event(event_id):
     try:
-        event = Event.query.filter_by(id = id).first()
+        event = Event.query.filter_by(id=event_id).first()
         db.session.delete(event)
         db.session.commit()
         return jsonify('Event successfully deleted')
     except Exception as e:
-        return(str(e))
+        return str(e)
 
-@app.route('/event/<id>', methods=["POST"])
-def join_event(id):
+
+@app.route('/event/<event_id>', methods=["POST"])
+def join_event(event_id):
     if not request.json:
         return abort(400)
 
@@ -248,22 +253,23 @@ def join_event(id):
     user_id = request.json['user_id']
 
     try:
-        user = User.query.filter_by(id = user_id).first()
+        user = User.query.filter_by(id=user_id).first()
     except Exception:
         return 'User not found'
 
     try:
         eventuser = EventUsers(
-            user_id = user_id,
-            event_id = id
+            user_id=user_id,
+            event_id=event_id
         )
 
         db.session.add(eventuser)
         db.session.commit()
     except Exception as e:
-        return(str(e))
+        return (str(e))
 
     return jsonify('User added successfully')
+
 
 #########################
 ### TRASH ###############

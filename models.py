@@ -18,10 +18,10 @@ class User(db.Model):
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
-    
+
     def serialize(self):
         return {
-            'id': self.id, 
+            'id': self.id,
             'email': self.email,
             'name': self.name,
             'points': self.points,
@@ -43,14 +43,15 @@ class Trash(db.Model):
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
-    
+
     def serialize(self):
         return {
-            'id': self.id, 
+            'id': self.id,
             'trash_type': self.trash_type,
             'latitude': self.latitude,
             'longitude': self.longitude,
         }
+
 
 class Event(db.Model):
     __tablename__ = 'events'
@@ -65,16 +66,17 @@ class Event(db.Model):
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
-    
+
     def serialize(self):
         return {
-            'id': self.id, 
+            'id': self.id,
             'latitude': self.latitude,
             'longitude': self.longitude,
             'date': self.date,
             'members': [u.serialize() for u in self.members],
             'leader': self.leader.serialize(),
-		}
+        }
+
 
 class EventUsers(db.Model):
     __tablename__ = 'eventusers'
@@ -85,12 +87,10 @@ class EventUsers(db.Model):
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
-    
+
     def serialize(self):
         return {
-            'id': self.id, 
+            'id': self.id,
             'user_id': self.user_id,
             'event_id': self.event_id,
-		}
-
-
+        }
