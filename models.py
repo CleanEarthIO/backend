@@ -24,7 +24,6 @@ class User(db.Model):
             'id': self.id, 
             'email': self.email,
             'name': self.name,
-            'password': self.password,
             'points': self.points,
         }
 
@@ -52,5 +51,46 @@ class Trash(db.Model):
             'latitude': self.latitude,
             'longitude': self.longitude,
         }
+
+class Event(db.Model):
+    __tablename__ = 'events'
+
+    id = db.Column(db.Integer, primary_key=True)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+    date = db.Column(db.Date)
+    leader_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    members = db.relationship("User", secondary='eventusers')
+    leader = db.relationship("User")
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
+    
+    def serialize(self):
+        return {
+            'id': self.id, 
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'date': self.date,
+            'members': [u.serialize() for u in self.members],
+            'leader': self.leader.serialize(),
+		}
+
+class EventUsers(db.Model):
+    __tablename__ = 'eventusers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'))
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
+    
+    def serialize(self):
+        return {
+            'id': self.id, 
+            'user_id': self.user_id,
+            'event_id': self.event_id,
+		}
 
 
