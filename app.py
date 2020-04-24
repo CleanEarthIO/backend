@@ -1,21 +1,17 @@
-from flask import Flask, request
-from flask_sqlalchemy import SQLAlchemy
-
 import os
-
-project_dir = os.path.dirname(os.path.abspath(__file__))
-database_file = "sqlite:///{}".format(os.path.join(project_dir, "database.db"))
-
-app = Flask(__name__)
-#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
-app.config['SQLALCHEMY_DATABASE_URI'] = database_file
+from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
 
 db = SQLAlchemy()
 
-@app.route('/')
-def home():
-    return 'hi'
+def create_app():
+    app = Flask(__name__)
+    project_dir = os.path.dirname(os.path.abspath(__file__))
+    database_file = "sqlite:///{}".format(os.path.join(project_dir, "database.db"))
+    # app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_file
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    db.init_app(app)
+
+    return app

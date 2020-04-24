@@ -7,7 +7,7 @@ class User(db.Model):
     email = db.Column(db.String(), nullable=False, unique=True)
     name = db.Column(db.String(), nullable=False, unique=False)
     password = db.Column(db.String(), nullable=False, unique=False)
-    points = db.Column(db.Integer, server_default=0)
+    points = db.Column(db.Integer)
 
     def __init__(self, email, name, password, points):
         self.email = email
@@ -28,7 +28,7 @@ class User(db.Model):
 		}
 
 class Trash(db.Model):
-    __tablename__ = 'groups'
+    __tablename__ = 'trash'
 
     id = db.Column(db.Integer, primary_key=True)
     trash_type = db.Column(db.String(), nullable=True)
