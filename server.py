@@ -1,31 +1,98 @@
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify, abort, session, redirect, url_for
+from functools import wraps
+from six.moves.urllib.parse import urlencode
+
+from authlib.integrations.flask_client import OAuth
 
 from app import create_app, db
 from models import User, Trash
 
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv('.env')
+
 app = create_app()
+
+oauth = OAuth(app)
+
+auth0 = oauth.register(
+    'auth0',
+    client_id='fteAxw9OIZy1xz7pUpfMu1Pp9HU9MfbF',
+    client_secret=os.environ.get('AUTH0'),
+    api_base_url='https://dev-ca6857k2.auth0.com',
+    access_token_url='https://dev-ca6857k2.auth0.com/oauth/token',
+    authorize_url='https://dev-ca6857k2.auth0.com/authorize',
+    client_kwargs={
+        'scope': 'openid profile email',
+    }
+)
+
 
 @app.route('/')
 def home():
     return 'hi'
 
+
+@app.route('/login')
+def login():
+    return auth0.authorize_redirect(redirect_uri='http://127.0.0.1:5000/callback')
+
+
+@app.route('/logout')
+def logout():
+    # Clear session stored data
+    session.clear()
+    # Redirect user to logout endpoint
+    params = {'returnTo': url_for('home', _external=True), 'client_id': 'fteAxw9OIZy1xz7pUpfMu1Pp9HU9MfbF'}
+    return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
+
+
+@app.route('/callback')
+def callback():
+    # Handles response from token endpoint
+    auth0.authorize_access_token()
+    resp = auth0.get('userinfo')
+    userinfo = resp.json()
+
+    # Store the user information in flask session.
+    session['jwt_payload'] = userinfo
+    session['profile'] = {
+        'user_id': userinfo['sub'],
+        'name': userinfo['name'],
+        'picture': userinfo['picture']
+    }
+    return redirect('/dashboard')
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'profile' not in session:
+            return redirect('/')
+        return f(*args, **kwargs)
+
+    return decorated
+
+
 @app.route('/users/', methods=["GET"])
-def getUsers():
+def get_users():
     users = User.query.all()
     return jsonify([u.serialize() for u in users])
 
-@app.route('/user/<id>/', methods=["GET"])
-def getUser(id):
+
+@app.route('/user/<user_id>/', methods=["GET"])
+def get_user(user_id):
     try:
-        user = User.query.filter_by(id = id).first()
+        user = User.query.filter_by(id=user_id).first()
         return jsonify(user.serialize())
     except Exception:
-        return("User not found")
+        return "User not found"
+
 
 @app.route('/user/', methods=["POST"])
-def makeUser():
+def make_user():
     if not request.json:
         return abort(400)
 
@@ -41,42 +108,45 @@ def makeUser():
 
     try:
         user = User(
-            email = email,
-            name = name,
-            password = password,
-            points = 0
+            email=email,
+            name=name,
+            password=password,
+            points=0
         )
         db.session.add(user)
         db.session.commit()
         return jsonify(user.serialize())
     except Exception as e:
-        return(str(e))
+        return str(e)
 
-@app.route('/user/<id>/addPoints', methods=["POST"])
-def addPoints(id):
+
+@app.route('/user/<point_id>/addPoints/', methods=["POST"])
+def add_points(point_id):
     if not request.json:
         return abort(400)
 
     if 'points' not in request.json:
         return abort(400)
 
-    pointsToAdd = request.json['points']
+    points_to_add = request.json['points']
 
     try:
-        user = User.query.filter_by(id = id).first()
-        user.points += pointsToAdd
+        user = User.query.filter_by(id=point_id).first()
+        user.points += points_to_add
         db.session.commit()
         return jsonify(user.serialize())
     except Exception as e:
-        return(str(e))
+        return str(e)
+
 
 @app.route('/trashAll/', methods=["GET"])
-def getAllTrash():
+def get_all_trash():
     trash = Trash.query.all()
     return jsonify([t.serialize() for t in trash])
 
+
 @app.route('/trash', methods=["POST"])
-def createTrash():
+def create_trash():
     if not request.json:
         return abort(400)
 
@@ -100,25 +170,28 @@ def createTrash():
         db.session.commit()
         return jsonify(trash.serialize())
     except Exception as e:
-        return(str(e))
+        return str(e)
 
-@app.route('/trash/<id>', methods=["DELETE"])
-def removeTrash(id):    
+
+@app.route('/trash/<trash_id>', methods=["DELETE"])
+def remove_trash(trash_id):
     try:
-        trash = Trash.query.filter_by(id = id).first()
+        trash = Trash.query.filter_by(id = trash_id).first()
         db.session.delete(trash)
         db.session.commit()
         return jsonify(trash.serialize())
     except Exception as e:
-        return(str(e))
+        return str(e)
+
 
 @app.route('/trashScan', methods=["POST"])
-def scanTrash():
+def scan_trash():
     # get image, longitude, latitude from request
     # get all instances of trash in the image
     # crop all instances of trash and classify what type of trash it is
     # add all the trash to the db
     return 'todo'
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

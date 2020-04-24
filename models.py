@@ -1,5 +1,6 @@
 from app import db
 
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -25,7 +26,8 @@ class User(db.Model):
             'name': self.name,
             'password': self.password,
             'points': self.points,
-		}
+        }
+
 
 class Trash(db.Model):
     __tablename__ = 'trash'
@@ -49,6 +51,6 @@ class Trash(db.Model):
             'trash_type': self.trash_type,
             'latitude': self.latitude,
             'longitude': self.longitude,
-		}
+        }
 
 
