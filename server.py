@@ -1,13 +1,17 @@
+import sys
+import os
+import hashlib
+import hmac
+import base64
+import json
+
 from flask import Flask, request, jsonify, abort, session, redirect, url_for
 from functools import wraps
 from six.moves.urllib.parse import urlencode
-
 from authlib.integrations.flask_client import OAuth
-
 from app import create_app, db
 from models import User, Trash
 
-import os
 
 from dotenv import load_dotenv
 
@@ -64,6 +68,25 @@ def callback():
         'picture': userinfo['picture']
     }
     return redirect('/dashboard')
+
+
+@app.route('/shutdown')
+def shutdown():
+    if not request.json or 'ref' not in request.json:
+        return jsonify({'success': False})
+    if request.json.ref == 'refs/heads/master':
+        return jsonify({'success': False})
+
+    key = bytes(os.environ.get('SHUTDOWN_SECRET'), 'UTF-8')
+    message = bytes(json.dumps(request.json, separators=(',', ':')), 'UTF-8')
+
+    digest = hmac.new(key, message, hashlib.sha1)
+    signature = digest.hexdigest()
+
+    if signature != request.headers.get('x-hub-signature')[5:]:
+        return jsonify({'success': False})
+
+    sys.exit(0)
 
 
 def login_required(f):
@@ -162,9 +185,9 @@ def create_trash():
 
     try:
         trash = Trash(
-            trash_type = trash_type,
-            latitude = latitude,
-            longitude = longitude
+            trash_type=trash_type,
+            latitude=latitude,
+            longitude=longitude
         )
         db.session.add(trash)
         db.session.commit()
@@ -176,7 +199,7 @@ def create_trash():
 @app.route('/trash/<trash_id>', methods=["DELETE"])
 def remove_trash(trash_id):
     try:
-        trash = Trash.query.filter_by(id = trash_id).first()
+        trash = Trash.query.filter_by(id=trash_id).first()
         db.session.delete(trash)
         db.session.commit()
         return jsonify(trash.serialize())
