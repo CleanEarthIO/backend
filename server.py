@@ -1,11 +1,9 @@
-import sys
 import os
 import hashlib
 import hmac
-import base64
 import json
 
-from flask import Flask, request, jsonify, abort, session, redirect, url_for
+from flask import request, jsonify, abort, session, redirect, url_for
 from functools import wraps
 from six.moves.urllib.parse import urlencode
 from authlib.integrations.flask_client import OAuth
@@ -70,11 +68,11 @@ def callback():
     return redirect('/dashboard')
 
 
-@app.route('/shutdown')
+@app.route('/shutdown', methods=['POST'])
 def shutdown():
     if not request.json or 'ref' not in request.json:
         return jsonify({'success': False})
-    if request.json.ref == 'refs/heads/master':
+    if request.json['ref'] != 'refs/heads/master':
         return jsonify({'success': False})
 
     key = bytes(os.environ.get('SHUTDOWN_SECRET'), 'UTF-8')
@@ -86,7 +84,11 @@ def shutdown():
     if signature != request.headers.get('x-hub-signature')[5:]:
         return jsonify({'success': False})
 
-    sys.exit(0)
+    shut_down = request.environ.get('werkzeug.server.shutdown')
+    if shutdown is None:
+        raise RuntimeError('Shutting down...')
+    else:
+        shut_down()
 
 
 def login_required(f):
