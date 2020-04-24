@@ -1,5 +1,5 @@
 from app import db, create_app
-from models import User, Trash
+from models import User, Trash, Event, EventUsers
 
 app = create_app()
 
