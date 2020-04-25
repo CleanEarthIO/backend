@@ -38,7 +38,7 @@ def favicon():
 
 
 @app.route('/fonts/<path:filename>')
-def favicon(filename):
+def fonts(filename):
     return send_from_directory('web/build/fonts', filename)
 
 
