@@ -24,7 +24,7 @@ class User(db.Model):
             'id': self.id,
             'email': self.email,
             'name': self.name,
-            'points': self.points,
+            'points': self.points
         }
 
 

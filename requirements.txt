@@ -5,3 +5,4 @@ authlib
 six
 flask_sqlalchemy
 flask-cors
+pyjwt
