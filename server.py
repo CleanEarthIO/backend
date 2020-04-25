@@ -9,6 +9,14 @@ from auth import AuthError
 from routes import EventRoutes, UserRoutes, TrashRoutes
 from subprocess import Popen
 
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+from object_detection.utils import ops as utils_ops
+from object_detection.utils import visualization_utils as vis_util
+
+from detector_utils import load_inference_graph, load_image_into_numpy_array, rescale, run_inference_image
+
 import os
 from dotenv import load_dotenv
 

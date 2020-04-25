@@ -5,6 +5,7 @@ authlib
 six
 flask_sqlalchemy
 flask-cors
+<<<<<<< HEAD
 pyjwt
 <<<<<<< HEAD
 google-streetview
@@ -20,3 +21,9 @@ opencv-python
 =======
 opencv-python
 >>>>>>> 3ae95d3... merge conflict
+=======
+tensorflow
+pillow
+tensorflow-object-detection-api
+tensorflow-estimator
+>>>>>>> 5f287b5... start work on trash scan
