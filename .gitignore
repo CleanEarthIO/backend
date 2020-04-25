@@ -2,9 +2,6 @@ __pycache__/
 database.db
 .env
 .idea
-<<<<<<< HEAD
 .DS_Store
-=======
 *.jpg
 *.jpeg
->>>>>>> 5f287b5... start work on trash scan
