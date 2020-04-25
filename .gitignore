@@ -3,3 +3,5 @@ database.db
 .env
 .idea
 .DS_Store
+*.jpg
+*.jpeg
