@@ -3,7 +3,6 @@ import hmac
 import json
 
 from flask import request, jsonify
-from authlib.integrations.flask_client import OAuth
 from app import create_app
 from flask_cors import CORS
 from auth import AuthError
@@ -16,7 +15,6 @@ load_dotenv('.env')
 
 app = create_app()
 cors = CORS(app, resources={r"*": {"origins": "*"}})
-oauth = OAuth(app)
 
 app.register_blueprint(EventRoutes)
 app.register_blueprint(UserRoutes)
