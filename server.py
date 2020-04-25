@@ -7,7 +7,7 @@ from app import create_app
 from flask_cors import CORS
 from auth import AuthError
 from routes import EventRoutes, UserRoutes, TrashRoutes
-from  subprocess import Popen
+from subprocess import Popen
 
 import os
 from dotenv import load_dotenv
