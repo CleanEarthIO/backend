@@ -33,17 +33,9 @@ load_dotenv('.env')
 app = create_app()
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
-<<<<<<< HEAD
 app.register_blueprint(EventRoutes)
 app.register_blueprint(UserRoutes)
 app.register_blueprint(TrashRoutes)
-=======
-prediction_list=['cardboard', 'glass', 'metal', 'paper', 'plastic', 'trash']
-model=load_model('model1.h5', custom_objects={'relu6': mobilenet.relu6})
-
-detection_graph, session = load_inference_graph()
-MIN_THRESHOLD = 0.5
->>>>>>> 4a57482... second model not working
 
 @app.route('/')
 def index():
