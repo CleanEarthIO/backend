@@ -9,22 +9,6 @@ from auth import AuthError
 from routes import EventRoutes, UserRoutes, TrashRoutes
 from subprocess import Popen
 
-import tensorflow as tf
-import numpy as np
-from PIL import Image
-from object_detection.utils import ops as utils_ops
-from object_detection.utils import visualization_utils as vis_util
-
-import keras
-from keras.models import Model, load_model
-from keras.applications import mobilenet
-from keras.applications.mobilenet import preprocess_input
-from keras.preprocessing import image as KerasImage
-from keras.utils.generic_utils import CustomObjectScope
-import cv2
-
-from detector_utils import load_inference_graph, load_image_into_numpy_array, rescale, run_inference_image
-
 import os
 from dotenv import load_dotenv
 
@@ -36,12 +20,6 @@ cors = CORS(app, resources={r"*": {"origins": "*"}})
 app.register_blueprint(EventRoutes)
 app.register_blueprint(UserRoutes)
 app.register_blueprint(TrashRoutes)
-
-prediction_list=['cardboard', 'glass', 'metal', 'paper', 'plastic', 'trash']
-model=load_model('model1.h5', custom_objects={'relu6': mobilenet.relu6})
-
-detection_graph, session = load_inference_graph()
-MIN_THRESHOLD = 0.5
 
 @app.route('/')
 def index():
@@ -110,78 +88,6 @@ def handle_auth_error(ex):
     response = jsonify(ex.error)
     response.status_code = ex.status_code
     return response
-@app.route('/trashScan', methods=["GET"])
-def scan_trash():
-    # TODO get image, longitude, latitude from request
-
-    image = Image.open('test.jpg')
-    image = image.convert('RGB')
-    im_width, im_height = image.size
-    if im_width > 640 or im_height > 640:
-        image = rescale(im_width, im_height, image)
-
-    image_np = load_image_into_numpy_array(image)
-
-    # get all instances of trash in the image
-    boxes = []
-    with detection_graph.as_default():             
-        with tf.device('/device:CPU:0'):
-            output = run_inference_image(image_np, session)
-            vis_util.visualize_boxes_and_labels_on_image_array(
-                image_np,
-                output['detection_boxes'],
-                output['detection_classes'],
-                output['detection_scores'],
-                {0: {'name': 'not litter'}, 1: {'name': 'litter'}},
-                instance_masks=output.get('detection_masks'),
-                use_normalized_coordinates=True,
-                max_boxes_to_draw=30,
-                min_score_thresh=MIN_THRESHOLD,
-                line_thickness=2)
-            im = Image.fromarray(image_np)
-            im.save("save.jpeg")
-
-            #remove this later
-            for score, box in zip(np.nditer(output['detection_scores']), output['detection_boxes']):
-                if score > MIN_THRESHOLD:
-                    boxes.append(box)
-
-    # crop all instances of trash
-    for i, box in enumerate(boxes):
-        ymin, xmin, ymax, xmax = box
-        im_width, im_height = image.size
-
-        ymin = max(0, ymin-0.05)
-        ymax = min(1, ymax+0.05)
-        xmin = max(0, xmin-0.05)
-        xmax = min(1, xmax+0.05)
-
-        left, right, top, bottom = xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height
-
-        zoomed_image = image.crop((left, top, right, bottom))
-
-        zoomed_image.save("zoom"+str(i)+".jpeg")
-
-        img = KerasImage.load_img("zoom"+str(i)+".jpeg", target_size=(224, 224))
-        x = KerasImage.img_to_array(img)
-        x = np.expand_dims(x, axis=0)
-        x = preprocess_input(x)
-
-        pred_img = np.asarray(x)
-
-        yo = model.predict(pred_img)
-        pred = prediction_list[np.argmax(yo)]
-
-        cv2.putText(img, pred, (10,1000), cv2.FONT_HERSHEY_SIMPLEX, 5, (0,0,0), 5, False)
-        name='img'+str(i)+'.png'
-        cv2.imwrite(os.path.join('prediction_images', name), img)
-
-    
-    # classify what type of trash it is
-
-    # add all the trash to the db
-    return jsonify({'numberOfTrash': num_trash})
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))

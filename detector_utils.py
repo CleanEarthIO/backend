@@ -4,6 +4,9 @@ from object_detection.utils import visualization_utils as vis_util
 import tensorflow as tf
 import numpy as np
 
+# import tensorflow.compat.v1 as tf
+# tf.disable_v2_behavior()
+
 def load_inference_graph():
     # load frozen tensorflow model into memory
     detection_graph = tf.Graph()
