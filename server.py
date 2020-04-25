@@ -1,13 +1,13 @@
 import hashlib
 import hmac
 import json
-import subprocess
 
 from flask import request, jsonify, send_file, send_from_directory
 from app import create_app
 from flask_cors import CORS
 from auth import AuthError
 from routes import EventRoutes, UserRoutes, TrashRoutes
+from  subprocess import Popen
 
 import os
 from dotenv import load_dotenv
@@ -75,7 +75,7 @@ def update():
     if signature != request.headers.get('x-hub-signature')[5:]:
         return jsonify({'success': False})
 
-    subprocess.call("update.bash")
+    Popen(['update.bash'], shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
     return jsonify({'success': True})
 
 
