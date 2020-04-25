@@ -15,6 +15,14 @@ from PIL import Image
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import visualization_utils as vis_util
 
+import keras
+from keras.models import Model, load_model
+from keras.applications import mobilenet
+from keras.applications.mobilenet import preprocess_input
+from keras.preprocessing import image as KerasImage
+from keras.utils.generic_utils import CustomObjectScope
+import cv2
+
 from detector_utils import load_inference_graph, load_image_into_numpy_array, rescale, run_inference_image
 
 import os
@@ -25,9 +33,17 @@ load_dotenv('.env')
 app = create_app()
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
+<<<<<<< HEAD
 app.register_blueprint(EventRoutes)
 app.register_blueprint(UserRoutes)
 app.register_blueprint(TrashRoutes)
+=======
+prediction_list=['cardboard', 'glass', 'metal', 'paper', 'plastic', 'trash']
+model=load_model('model1.h5', custom_objects={'relu6': mobilenet.relu6})
+
+detection_graph, session = load_inference_graph()
+MIN_THRESHOLD = 0.5
+>>>>>>> 4a57482... second model not working
 
 @app.route('/')
 def index():
