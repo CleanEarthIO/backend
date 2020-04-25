@@ -6,3 +6,4 @@ six
 flask_sqlalchemy
 flask-cors
 pyjwt
+google-streetview
