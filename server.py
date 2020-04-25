@@ -30,7 +30,7 @@ app.register_blueprint(UserRoutes)
 app.register_blueprint(TrashRoutes)
 
 detection_graph, session = load_inference_graph()
-MIN_THRESHOLD = 0.65
+MIN_THRESHOLD = 0.5
 
 @app.route('/')
 def index():
@@ -111,7 +111,7 @@ def scan_trash():
 
     image_np = load_image_into_numpy_array(image)
 
-    num_trash = 0
+    boxes = []
 
     with detection_graph.as_default():             
         with tf.device('/device:CPU:0'):
@@ -130,11 +130,25 @@ def scan_trash():
             im = Image.fromarray(image_np)
             im.save("save.jpeg")
 
-
             #remove this later
-            for score in np.nditer(output['detection_scores']):
+            for score, box in zip(np.nditer(output['detection_scores']), output['detection_boxes']):
                 if score > MIN_THRESHOLD:
-                    num_trash += 1
+                    boxes.append(box)
+
+    trash_images = []
+    for i, box in enumerate(boxes):
+        ymin, xmin, ymax, xmax = box
+        im_width, im_height = image.size
+
+        ymin = max(0, ymin-0.05)
+        ymax = min(1, ymax+0.05)
+        xmin = max(0, xmin-0.05)
+        xmax = min(1, xmax+0.05)
+
+        left, right, top, bottom = xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height
+        trash_images.append(image.crop((left, top, right, bottom)))
+
+        trash_images[i].save("zoom"+str(i)+".jpeg")
 
     # get all instances of trash in the image
     # crop all instances of trash and classify what type of trash it is
