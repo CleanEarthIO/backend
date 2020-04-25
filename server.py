@@ -80,7 +80,7 @@ def update():
     if signature != request.headers.get('x-hub-signature')[5:]:
         return jsonify({'success': False})
 
-    Popen('update.bash', shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
+    Popen('bash update.bash', shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
     return jsonify({'success': True})
 
 
