@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import json
 
-from flask import request, jsonify
+from flask import request, jsonify, send_file, send_from_directory
 from app import create_app
 from flask_cors import CORS
 from auth import AuthError
@@ -19,6 +19,21 @@ cors = CORS(app, resources={r"*": {"origins": "*"}})
 app.register_blueprint(EventRoutes)
 app.register_blueprint(UserRoutes)
 app.register_blueprint(TrashRoutes)
+
+
+@app.route('/')
+def index():
+    return send_file('web/build/index.html')
+
+
+@app.route("/manifest.json")
+def manifest():
+    return send_from_directory('web/build', 'manifest.json')
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('web/build', 'favicon.ico')
 
 
 @app.route('/shutdown', methods=['POST'])
