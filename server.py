@@ -9,6 +9,14 @@ from auth import AuthError
 from routes import EventRoutes, UserRoutes, TrashRoutes
 from subprocess import Popen
 
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+from object_detection.utils import ops as utils_ops
+from object_detection.utils import visualization_utils as vis_util
+
+from detector_utils import load_inference_graph, load_image_into_numpy_array, rescale, run_inference_image
+
 import os
 from dotenv import load_dotenv
 
@@ -21,6 +29,8 @@ app.register_blueprint(EventRoutes)
 app.register_blueprint(UserRoutes)
 app.register_blueprint(TrashRoutes)
 
+detection_graph, session = load_inference_graph()
+MIN_THRESHOLD = 0.65
 
 @app.route('/')
 def index():
@@ -89,6 +99,47 @@ def handle_auth_error(ex):
     response = jsonify(ex.error)
     response.status_code = ex.status_code
     return response
+@app.route('/trashScan', methods=["GET"])
+def scan_trash():
+    # TODO get image, longitude, latitude from request
+
+    image = Image.open('test.jpg')
+    image = image.convert('RGB')
+    im_width, im_height = image.size
+    if im_width > 640 or im_height > 640:
+        image = rescale(im_width, im_height, image)
+
+    image_np = load_image_into_numpy_array(image)
+
+    num_trash = 0
+
+    with detection_graph.as_default():             
+        with tf.device('/device:CPU:0'):
+            output = run_inference_image(image_np, session)
+            vis_util.visualize_boxes_and_labels_on_image_array(
+                image_np,
+                output['detection_boxes'],
+                output['detection_classes'],
+                output['detection_scores'],
+                {0: {'name': 'not litter'}, 1: {'name': 'litter'}},
+                instance_masks=output.get('detection_masks'),
+                use_normalized_coordinates=True,
+                max_boxes_to_draw=30,
+                min_score_thresh=MIN_THRESHOLD,
+                line_thickness=2)
+            im = Image.fromarray(image_np)
+            im.save("save.jpeg")
+
+
+            #remove this later
+            for score in np.nditer(output['detection_scores']):
+                if score > MIN_THRESHOLD:
+                    num_trash += 1
+
+    # get all instances of trash in the image
+    # crop all instances of trash and classify what type of trash it is
+    # add all the trash to the db
+    return jsonify({'numberOfTrash': num_trash})
 
 
 if __name__ == '__main__':
