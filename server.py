@@ -15,6 +15,14 @@ from PIL import Image
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import visualization_utils as vis_util
 
+import keras
+from keras.models import Model, load_model
+from keras.applications import mobilenet
+from keras.applications.mobilenet import preprocess_input
+from keras.preprocessing import image as KerasImage
+from keras.utils.generic_utils import CustomObjectScope
+import cv2
+
 from detector_utils import load_inference_graph, load_image_into_numpy_array, rescale, run_inference_image
 
 import os
@@ -28,6 +36,9 @@ cors = CORS(app, resources={r"*": {"origins": "*"}})
 app.register_blueprint(EventRoutes)
 app.register_blueprint(UserRoutes)
 app.register_blueprint(TrashRoutes)
+
+prediction_list=['cardboard', 'glass', 'metal', 'paper', 'plastic', 'trash']
+model=load_model('model1.h5', custom_objects={'relu6': mobilenet.relu6})
 
 detection_graph, session = load_inference_graph()
 MIN_THRESHOLD = 0.5
@@ -111,8 +122,8 @@ def scan_trash():
 
     image_np = load_image_into_numpy_array(image)
 
+    # get all instances of trash in the image
     boxes = []
-
     with detection_graph.as_default():             
         with tf.device('/device:CPU:0'):
             output = run_inference_image(image_np, session)
@@ -135,7 +146,7 @@ def scan_trash():
                 if score > MIN_THRESHOLD:
                     boxes.append(box)
 
-    trash_images = []
+    # crop all instances of trash
     for i, box in enumerate(boxes):
         ymin, xmin, ymax, xmax = box
         im_width, im_height = image.size
@@ -146,12 +157,28 @@ def scan_trash():
         xmax = min(1, xmax+0.05)
 
         left, right, top, bottom = xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height
-        trash_images.append(image.crop((left, top, right, bottom)))
 
-        trash_images[i].save("zoom"+str(i)+".jpeg")
+        zoomed_image = image.crop((left, top, right, bottom))
 
-    # get all instances of trash in the image
-    # crop all instances of trash and classify what type of trash it is
+        zoomed_image.save("zoom"+str(i)+".jpeg")
+
+        img = KerasImage.load_img("zoom"+str(i)+".jpeg", target_size=(224, 224))
+        x = KerasImage.img_to_array(img)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
+
+        pred_img = np.asarray(x)
+
+        yo = model.predict(pred_img)
+        pred = prediction_list[np.argmax(yo)]
+
+        cv2.putText(img, pred, (10,1000), cv2.FONT_HERSHEY_SIMPLEX, 5, (0,0,0), 5, False)
+        name='img'+str(i)+'.png'
+        cv2.imwrite(os.path.join('prediction_images', name), img)
+
+    
+    # classify what type of trash it is
+
     # add all the trash to the db
     return jsonify({'numberOfTrash': num_trash})
 

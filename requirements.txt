@@ -11,3 +11,5 @@ tensorflow
 pillow
 tensorflow-object-detection-api
 tensorflow-estimator
+keras
+opencv-python
