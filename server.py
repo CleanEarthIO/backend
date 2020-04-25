@@ -2,12 +2,12 @@ import hashlib
 import hmac
 import json
 
-from flask import request, jsonify
-from authlib.integrations.flask_client import OAuth
+from flask import request, jsonify, send_file, send_from_directory
 from app import create_app
 from flask_cors import CORS
 from auth import AuthError
 from routes import EventRoutes, UserRoutes, TrashRoutes
+from subprocess import Popen
 
 import os
 from dotenv import load_dotenv
@@ -16,11 +16,25 @@ load_dotenv('.env')
 
 app = create_app()
 cors = CORS(app, resources={r"*": {"origins": "*"}})
-oauth = OAuth(app)
 
 app.register_blueprint(EventRoutes)
 app.register_blueprint(UserRoutes)
 app.register_blueprint(TrashRoutes)
+
+
+@app.route('/')
+def index():
+    return send_file('web/build/index.html')
+
+
+@app.route("/manifest.json")
+def manifest():
+    return send_from_directory('web/build', 'manifest.json')
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('web/build', 'favicon.ico')
 
 
 @app.route('/shutdown', methods=['POST'])
@@ -44,6 +58,25 @@ def shutdown():
         raise RuntimeError('Shutting down...')
     else:
         shut_down()
+
+
+@app.route('/update', methods=['POST'])
+def update():
+    if not request.json or 'ref' not in request.json:
+        return jsonify({'success': False})
+    if request.json['ref'] != 'refs/heads/master':
+        return jsonify({'success': False})
+
+    key = bytes(os.environ.get('UPDATE_SECRET'), 'UTF-8')
+    message = bytes(json.dumps(request.json, separators=(',', ':')), 'UTF-8')
+
+    digest = hmac.new(key, message, hashlib.sha1)
+    signature = digest.hexdigest()
+    if signature != request.headers.get('x-hub-signature')[5:]:
+        return jsonify({'success': False})
+
+    Popen(['update.bash'], shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
+    return jsonify({'success': True})
 
 
 @app.errorhandler(AuthError)
