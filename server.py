@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import subprocess
 
 from flask import request, jsonify, send_file, send_from_directory
 from app import create_app
@@ -57,6 +58,25 @@ def shutdown():
         raise RuntimeError('Shutting down...')
     else:
         shut_down()
+
+
+@app.route('/update', methods=['POST'])
+def update():
+    if not request.json or 'ref' not in request.json:
+        return jsonify({'success': False})
+    if request.json['ref'] != 'refs/heads/master':
+        return jsonify({'success': False})
+
+    key = bytes(os.environ.get('UPDATE_SECRET'), 'UTF-8')
+    message = bytes(json.dumps(request.json, separators=(',', ':')), 'UTF-8')
+
+    digest = hmac.new(key, message, hashlib.sha1)
+    signature = digest.hexdigest()
+    if signature != request.headers.get('x-hub-signature')[5:]:
+        return jsonify({'success': False})
+
+    subprocess.call("update.bash")
+    return jsonify({'success': True})
 
 
 @app.errorhandler(AuthError)
