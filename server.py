@@ -37,6 +37,11 @@ def favicon():
     return send_from_directory('web/build', 'favicon.ico')
 
 
+@app.route('/fonts/<path:filename>')
+def favicon(filename):
+    return send_from_directory('web/build/fonts', filename)
+
+
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
     if not request.json or 'ref' not in request.json:
