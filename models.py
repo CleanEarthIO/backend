@@ -35,12 +35,13 @@ class Trash(db.Model):
     image = db.Column(db.String())
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
-
-    def __init__(self, trash_type, latitude, longitude, image):
-        self.trash_type = trash_type
-        self.latitude = latitude
-        self.longitude = longitude
-        self.image = image
+    country = db.Column(db.String(64))
+    city = db.Column(db.String(64))
+    state = db.Column(db.String(64))
+    road = db.Column(db.String(64))
+    postcode = db.Column(db.String(10))
+    state_code = db.Column(db.String(10))
+    country_code = db.Column(db.String(10))
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -51,7 +52,14 @@ class Trash(db.Model):
             'trash_type': self.trash_type,
             'latitude': self.latitude,
             'longitude': self.longitude,
-            'image': self.image
+            'image': self.image,
+            'country': self.country,
+            'city': self.city,
+            'state': self.state,
+            'road': self.road,
+            'postcode': self.postcode,
+            'state_code': self.state_code,
+            'country_code': self.country_code
         }
 
 
