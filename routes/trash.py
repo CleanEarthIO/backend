@@ -8,12 +8,23 @@ from detector_utils import load_inference_graph, load_image_into_numpy_array, re
 import tensorflow as tf
 import numpy as np
 
+import keras
+from keras.models import Model, load_model
+from keras.applications import MobileNet
+from keras.applications.mobilenet import preprocess_input
+from keras.preprocessing import image as KerasImage
+from keras.utils.generic_utils import CustomObjectScope
+from keras.layers import DepthwiseConv2D, ReLU
+import cv2
+
 
 TrashRoutes = Blueprint('TrashRoutes', __name__)
 
 detection_graph, session = load_inference_graph()
 MIN_THRESHOLD = 0.5
 
+prediction_list=['cardboard', 'glass', 'metal', 'paper', 'plastic', 'trash']
+model=load_model('model1.h5', custom_objects={'relu6': ReLU})
 
 @TrashRoutes.route('/trashAll/', methods=["GET"])
 def get_all_trash():
@@ -119,5 +130,36 @@ def scan_trash():
             db.session.commit()
         except Exception as e:
             return str(e)
+
+    # # crop all instances of trash
+    for i, box in enumerate(boxes):
+        ymin, xmin, ymax, xmax = box
+        im_width, im_height = image.size
+
+        ymin = max(0, ymin-0.05)
+        ymax = min(1, ymax+0.05)
+        xmin = max(0, xmin-0.05)
+        xmax = min(1, xmax+0.05)
+
+        left, right, top, bottom = xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height
+
+        zoomed_image = image.crop((left, top, right, bottom))
+
+        zoomed_image.save("zoom"+str(i)+".jpeg")
+
+        img = KerasImage.load_img("zoom"+str(i)+".jpeg", target_size=(224, 224))
+        x = KerasImage.img_to_array(img)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
+
+        pred_img = np.asarray(x)
+        
+
+        yo = model.predict(pred_img)
+        pred = prediction_list[np.argmax(yo)]
+
+        cv2.putText(img, pred, (10,1000), cv2.FONT_HERSHEY_SIMPLEX, 5, (0,0,0), 5, False)
+        name='img'+str(i)+'.png'
+        cv2.imwrite(os.path.join('prediction_images', name), img)
 
     return 'Processing'
