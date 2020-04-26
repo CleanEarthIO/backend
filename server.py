@@ -7,6 +7,7 @@ from app import create_app
 from flask_cors import CORS
 from auth import AuthError
 from routes import EventRoutes, UserRoutes, TrashRoutes
+from models import User
 from subprocess import Popen
 from flask_login import LoginManager
 
@@ -23,6 +24,11 @@ cors = CORS(app, resources={r"*": {"origins": "*"}})
 app.register_blueprint(EventRoutes)
 app.register_blueprint(UserRoutes)
 app.register_blueprint(TrashRoutes)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
 
 
 @app.route('/')
