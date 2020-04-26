@@ -1,5 +1,5 @@
 import json
-import jwt
+from jose import jwt
 
 from flask import request
 from six.moves.urllib.request import urlopen
@@ -44,30 +44,6 @@ def get_token_auth_header():
 
 def get_auth_payload():
     token = get_token_auth_header()
-    jsonurl = urlopen("https://" + AUTH0_DOMAIN + "/pem")
-    pem = jsonurl.read()
-    try:
-        payload = jwt.decode(
-            token,
-            pem,
-            algorithms=ALGORITHMS,
-            audience=API_AUDIENCE,
-            issuer="https://" + AUTH0_DOMAIN + "/"
-        )
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise AuthError({"code": "token_expired",
-                             "description": "token is expired"}, 401)
-    except Exception:
-        raise AuthError({"code": "invalid_header",
-                             "description":
-                                 "Unable to parse authentication"
-                                 " token."}, 401)
-
-
-"""
-def get_auth_payload():
-    token = get_token_auth_header()
     jsonurl = urlopen("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json")
     jwks = json.loads(jsonurl.read())
     unverified_header = jwt.get_unverified_header(token)
@@ -101,4 +77,3 @@ def get_auth_payload():
                                  " token."}, 401)
     raise AuthError({"code": "invalid_header",
                      "description": "Unable to find appropriate key"}, 401)
-"""

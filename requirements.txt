@@ -5,7 +5,6 @@ authlib
 six
 flask_sqlalchemy
 flask-cors
-pyjwt
 google-streetview
 tensorflow
 pillow
@@ -13,3 +12,4 @@ tensorflow-object-detection-api
 tensorflow-estimator
 opencv-python
 flask-login
+python-jose
