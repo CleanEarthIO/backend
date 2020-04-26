@@ -16,7 +16,7 @@ tz = timezone('EST')
 
 @EventRoutes.route('/events/', methods=["GET"])
 def get_events():
-    events = Event.query.filter(Event.date >= datetime.now())
+    events = Event.query.filter(Event.date >= datetime.now(tz))
     return jsonify([e.serialize() for e in events])
 
 
