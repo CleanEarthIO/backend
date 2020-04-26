@@ -6,3 +6,5 @@ database.db
 *.jpg
 *.jpeg
 *.pb
+web/
+photos/
