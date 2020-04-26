@@ -154,7 +154,7 @@ def my_events():
     user_id = current_user.id
 
     try:
-        events = Event.query.filter_by(user_id=user_id).all()
+        events = Event.query.filter_by((EventUsers.user_id == user_id) & (EventUsers.event_id == Event.id)).all()
         return jsonify([event.serialize() for event in events])
     except Exception as e:
         return str(e)
