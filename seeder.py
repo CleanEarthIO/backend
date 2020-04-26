@@ -21,7 +21,7 @@ def create_connection():
 
 def insert_file(conn, latitude, longitude, file_name):
     cur = conn.cursor()
-    cur.execute("INSERT INTO street_images (latitude, longitude, file_name) VALUES (" + latitude + ", " + longitude + ", " + file_name + ";")
+    cur.execute("INSERT INTO street_images (latitude, longitude, file_name) VALUES (" + latitude + ", " + longitude + ", " + file_name + ");")
 
 def seed(conn, topLeft, bottomRight):
     params = [{
