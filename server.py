@@ -8,22 +8,7 @@ from flask_cors import CORS
 from auth import AuthError
 from routes import EventRoutes, UserRoutes, TrashRoutes
 from subprocess import Popen
-
-import tensorflow as tf
-import numpy as np
-from PIL import Image
-from object_detection.utils import ops as utils_ops
-from object_detection.utils import visualization_utils as vis_util
-
-import keras
-from keras.models import Model, load_model
-from keras.applications import mobilenet
-from keras.applications.mobilenet import preprocess_input
-from keras.preprocessing import image as KerasImage
-from keras.utils.generic_utils import CustomObjectScope
-import cv2
-
-from detector_utils import load_inference_graph, load_image_into_numpy_array, rescale, run_inference_image
+from flask_login import LoginManager
 
 import os
 from dotenv import load_dotenv
@@ -31,11 +16,14 @@ from dotenv import load_dotenv
 load_dotenv('.env')
 
 app = create_app()
+login_manager = LoginManager()
+login_manager.init_app(app)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
 app.register_blueprint(EventRoutes)
 app.register_blueprint(UserRoutes)
 app.register_blueprint(TrashRoutes)
+
 
 @app.route('/')
 def index():
@@ -104,6 +92,7 @@ def handle_auth_error(ex):
     response = jsonify(ex.error)
     response.status_code = ex.status_code
     return response
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))

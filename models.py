@@ -4,16 +4,14 @@ from app import db
 class User(db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(), nullable=False, unique=True)
     name = db.Column(db.String(), nullable=False, unique=False)
-    password = db.Column(db.String(), nullable=False, unique=False)
     points = db.Column(db.Integer)
 
-    def __init__(self, email, name, password, points):
+    def __init__(self, email, name, points=0):
         self.email = email
         self.name = name
-        self.password = password
         self.points = points
 
     def __repr__(self):

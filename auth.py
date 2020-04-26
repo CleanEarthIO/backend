@@ -1,9 +1,11 @@
 import json
 import jwt
 
-from flask import request, _request_ctx_stack
+from flask import request
+from flask_login import login_user
 from functools import wraps
 from six.moves.urllib.request import urlopen
+from routes.user import User
 
 AUTH0_DOMAIN = 'dev-ca6857k2.auth0.com'
 API_AUDIENCE = '61RzFbSCgfe7vwyeFX2NydTvilxSm6R2'
@@ -43,43 +45,48 @@ def get_token_auth_header():
     return token
 
 
+def get_auth_payload():
+    token = get_token_auth_header()
+    jsonurl = urlopen("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json")
+    jwks = json.loads(jsonurl.read())
+    unverified_header = jwt.get_unverified_header(token)
+    rsa_key = {}
+    for key in jwks["keys"]:
+        if key["kid"] == unverified_header["kid"]:
+            rsa_key = {
+                "kty": key["kty"],
+                "kid": key["kid"],
+                "use": key["use"],
+                "n": key["n"],
+                "e": key["e"]
+            }
+    if rsa_key:
+        try:
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=ALGORITHMS,
+                audience=API_AUDIENCE,
+                issuer="https://" + AUTH0_DOMAIN + "/"
+            )
+            return payload
+        except jwt.ExpiredSignatureError:
+            raise AuthError({"code": "token_expired",
+                             "description": "token is expired"}, 401)
+        except Exception:
+            raise AuthError({"code": "invalid_header",
+                             "description":
+                                 "Unable to parse authentication"
+                                 " token."}, 401)
+    raise AuthError({"code": "invalid_header",
+                     "description": "Unable to find appropriate key"}, 401)
+
+
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = get_token_auth_header()
-        jsonurl = urlopen("https://"+AUTH0_DOMAIN+"/.well-known/jwks.json")
-        jwks = json.loads(jsonurl.read())
-        unverified_header = jwt.get_unverified_header(token)
-        rsa_key = {}
-        for key in jwks["keys"]:
-            if key["kid"] == unverified_header["kid"]:
-                rsa_key = {
-                    "kty": key["kty"],
-                    "kid": key["kid"],
-                    "use": key["use"],
-                    "n": key["n"],
-                    "e": key["e"]
-                }
-        if rsa_key:
-            try:
-                payload = jwt.decode(
-                    token,
-                    rsa_key,
-                    algorithms=ALGORITHMS,
-                    audience=API_AUDIENCE,
-                    issuer="https://"+AUTH0_DOMAIN+"/"
-                )
-            except jwt.ExpiredSignatureError:
-                raise AuthError({"code": "token_expired",
-                                "description": "token is expired"}, 401)
-            except Exception:
-                raise AuthError({"code": "invalid_header",
-                                "description":
-                                    "Unable to parse authentication"
-                                    " token."}, 401)
-
-            _request_ctx_stack.top.current_user = payload
-            return f(*args, **kwargs)
-        raise AuthError({"code": "invalid_header",
-                        "description": "Unable to find appropriate key"}, 401)
+        payload = get_auth_payload()
+        user = User.query.filter_by(id=payload['email']).first()
+        login_user(user)
+        return f(*args, **kwargs)
     return decorated

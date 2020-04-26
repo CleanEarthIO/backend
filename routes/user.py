@@ -1,6 +1,7 @@
 from flask import request, jsonify, abort, Blueprint
 from app import db
 from models import User
+from auth import get_auth_payload
 
 
 UserRoutes = Blueprint('UserRoutes', __name__)
@@ -21,27 +22,25 @@ def get_user(user_id):
         return "User not found"
 
 
-@UserRoutes.route('/user/', methods=["POST"])
+@UserRoutes.route('/callback', methods=["POST"])
 def make_user():
     if not request.json:
         return abort(400)
 
-    params = ['email', 'name', 'password']
+    payload = get_auth_payload()
+    params = ['email', 'name']
 
     for p in params:
-        if p not in request.json:
+        if p not in payload:
             return abort(400)
 
     email = request.json['email']
     name = request.json['name']
-    password = request.json['password']
 
     try:
         user = User(
             email=email,
-            name=name,
-            password=password,
-            points=0
+            name=name
         )
         db.session.add(user)
         db.session.commit()

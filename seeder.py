@@ -4,7 +4,8 @@ import random
 from time import sleep, time
 from os import rename
 
-def seed(topLeft, bottomRight):
+
+def seed(left, right):
     params = [{
         'size': '960x540',
         'location': 'temp',
@@ -14,17 +15,17 @@ def seed(topLeft, bottomRight):
     }]
 
     for _ in range(100):
-        params[0]['location'] = str(random.uniform(topLeft[0], bottomRight[0])) + ',' + str(random.uniform(topLeft[1], bottomRight[1]))
+        params[0]['location'] = str(random.uniform(left[0], right[0])) + ',' + str(random.uniform(left[1], right[1]))
         results = google_streetview.api.results(params)
         print(vars(results))
         results.download_links('photos')
         sleep(2)
-        if (results.metadata[0]['status'] == "OK"):
+        if results.metadata[0]['status'] == "OK":
             rename("photos/gsv_0.jpg", "photos/" + str(time()) + ".jpg")
         
 
 if __name__ == "__main__":
     # lat, lon
-    topLeft = [29.440235, -98.503513]
-    bottomRight = [29.410889, -98.481520]
-    seed(topLeft, bottomRight)
+    top_left = [29.440235, -98.503513]
+    bottom_right = [29.410889, -98.481520]
+    seed(top_left, bottom_right)
