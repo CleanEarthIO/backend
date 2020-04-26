@@ -119,8 +119,6 @@ def scan_trash():
                 if score > MIN_THRESHOLD:
                     boxes.append(box)
 
-    print("I AM HERE")
-
     # # crop all instances of trash
     for i, box in enumerate(boxes):
         ymin, xmin, ymax, xmax = box
