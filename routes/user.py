@@ -25,9 +25,6 @@ def get_user(user_id):
 
 @UserRoutes.route('/login', methods=["POST"])
 def make_user():
-    if not request.json:
-        return abort(400)
-
     payload = get_auth_payload()
     params = ['email', 'name']
 
