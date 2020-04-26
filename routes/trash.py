@@ -32,6 +32,29 @@ model._make_predict_function()
 labels={0: 'cardboard', 1: 'glass', 2: 'trash', 3: 'paper', 4: 'plastic', 5: 'trash'}
 
 
+@TrashRoutes.route('/fixTrash', methods=["GET"])
+def fix():
+    trash = Trash.query.all()
+    for t in trash:
+        params = {
+            'q': f"{t.latitude}, {t.longitude}",
+            'key': os.environ.get('GEO_KEY'),
+            'language': 'en',
+            'pretty': 1
+        }
+        resp = requests.get('https://api.opencagedata.com/geocode/v1/json', params=params)
+        json = resp.json()
+        t.country = json['results'][0]['components'].get('country', None)
+        t.city = json['results'][0]['components'].get('city', None)
+        t.state = json['results'][0]['components'].get('state', None)
+        t.road = json['results'][0]['components'].get('road', None)
+        t.postcode = json['results'][0]['components'].get('postcode', None)
+        t.state_code = json['results'][0]['components'].get('state_code', None)
+        t.country_code = json['results'][0]['components'].get('country_code', None)
+        db.session.commit()
+    trash = Trash.query.all()
+    return jsonify([t.serialize() for t in trash])
+
 @TrashRoutes.route('/trashAll/', methods=["GET"])
 def get_all_trash():
     trash = Trash.query.all()
