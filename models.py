@@ -65,7 +65,7 @@ class Event(db.Model):
     postcode = db.Column(db.String(10))
     state_code = db.Column(db.String(10))
     country_code = db.Column(db.String(10))
-    date = db.Column(db.Date)
+    date = db.Column(db.DateTime)
     leader_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     members = db.relationship("User", secondary='eventusers')
     leader = db.relationship("User")
@@ -78,7 +78,7 @@ class Event(db.Model):
             'id': self.id,
             'latitude': self.latitude,
             'longitude': self.longitude,
-            'date': self.date,
+            'date': str(self.date),
             'members': [u.serialize() for u in self.members],
             'leader': self.leader.serialize(),
             'country': self.country,
