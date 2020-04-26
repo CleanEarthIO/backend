@@ -133,12 +133,14 @@ def leave_event(event_id):
     user_id = current_user.id
 
     try:
-        eventuser = EventUsers.query.filter_by(
+        eventusers = EventUsers.query.filter_by(
             user_id=user_id,
             event_id=event_id
-        ).first()
+        ).all()
 
-        db.session.delete(eventuser)
+        for eventuser in eventusers:
+            db.session.delete(eventuser)
+
         db.session.commit()
     except Exception as e:
         return str(e)

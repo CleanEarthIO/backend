@@ -36,6 +36,11 @@ def index():
     return send_file('web/build/index.html')
 
 
+@app.route('/discover')
+def discover():
+    return send_file('web/build/index.html')
+
+
 @app.route("/manifest.json")
 def manifest():
     return send_from_directory('web/build', 'manifest.json')
