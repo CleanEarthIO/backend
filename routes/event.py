@@ -127,7 +127,7 @@ def join_event(event_id):
     return jsonify('User added successfully')
 
 
-@EventRoutes.route('/event/<event_id>', methods=["DELETE"])
+@EventRoutes.route('/leaveEvent/<event_id>', methods=["DELETE"])
 @requires_auth
 def leave_event(event_id):
     user_id = current_user.id
