@@ -13,6 +13,9 @@ from keras.models import Model, load_model
 from keras.preprocessing import image as KerasImage
 import cv2
 
+import string
+import random
+
 
 TrashRoutes = Blueprint('TrashRoutes', __name__)
 
@@ -30,34 +33,6 @@ labels={0: 'cardboard', 1: 'glass', 2: 'trash', 3: 'paper', 4: 'plastic', 5: 'tr
 def get_all_trash():
     trash = Trash.query.all()
     return jsonify([t.serialize() for t in trash])
-
-
-@TrashRoutes.route('/trash', methods=["POST"])
-def create_trash():
-    if not request.json:
-        return abort(400)
-
-    params = ['trash_type', 'latitude', 'longitude']
-
-    for p in params:
-        if p not in request.json:
-            return abort(400)
-
-    trash_type = request.json['trash_type']
-    latitude = request.json['latitude']
-    longitude = request.json['longitude']
-
-    try:
-        trash = Trash(
-            trash_type=trash_type,
-            latitude=latitude,
-            longitude=longitude
-        )
-        db.session.add(trash)
-        db.session.commit()
-        return jsonify(trash.serialize())
-    except Exception as e:
-        return str(e)
 
 
 @TrashRoutes.route('/trash/<trash_id>', methods=["DELETE"])
@@ -113,7 +88,8 @@ def scan_trash():
                 min_score_thresh=MIN_THRESHOLD,
                 line_thickness=2)
             im = Image.fromarray(image_np)
-            im.save("save.jpeg")
+            img_id = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
+            im.save(f"uploads/{img_id}.jpeg")
 
             for score, box in zip(np.nditer(output['detection_scores']), output['detection_boxes']):
                 if score > MIN_THRESHOLD:
@@ -149,7 +125,8 @@ def scan_trash():
             trash = Trash(
                 trash_type=predicted_class,
                 latitude=latitude,
-                longitude=longitude
+                longitude=longitude,
+                image=img_id
             )
             db.session.add(trash)
             db.session.commit()

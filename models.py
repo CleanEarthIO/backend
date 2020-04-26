@@ -32,13 +32,15 @@ class Trash(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     trash_type = db.Column(db.String(), nullable=True)
+    image = db.Column(db.String())
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
 
-    def __init__(self, trash_type, latitude, longitude):
+    def __init__(self, trash_type, latitude, longitude, image):
         self.trash_type = trash_type
         self.latitude = latitude
         self.longitude = longitude
+        self.image = image
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -49,6 +51,7 @@ class Trash(db.Model):
             'trash_type': self.trash_type,
             'latitude': self.latitude,
             'longitude': self.longitude,
+            'image': self.image
         }
 
 
