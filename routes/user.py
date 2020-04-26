@@ -2,7 +2,7 @@ from flask import request, jsonify, abort, Blueprint
 from app import db
 from models import User
 from auth import get_auth_payload
-from flask_login import login_user, current_user
+from flask_login import login_user, current_user, logout_user
 from functools import wraps
 
 UserRoutes = Blueprint('UserRoutes', __name__)
@@ -51,6 +51,12 @@ def make_user():
         return jsonify(user.serialize())
     except Exception as e:
         return str(e)
+
+
+@UserRoutes.route('/logout', methods=["POST"])
+def logout():
+    logout_user()
+    return jsonify({})
 
 
 @UserRoutes.route('/user/<point_id>/addPoints/', methods=["POST"])
