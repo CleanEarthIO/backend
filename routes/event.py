@@ -6,6 +6,9 @@ from flask_login import current_user
 
 from routes.user import requires_auth
 
+import requests
+import os
+
 EventRoutes = Blueprint('EventRoutes', __name__)
 
 
@@ -38,11 +41,33 @@ def create_event():
         return 'Leader not found'
 
     try:
+        params = {
+            'q': f"{latitude}, {longitude}",
+            'key': os.environ.get('GEO_KEY'),
+            'language': 'en',
+            'pretty': 1
+        }
+        resp = requests.get('https://api.opencagedata.com/geocode/v1/json', params=params)
+        json = resp.json()
+        country = json['results'][0]['components'].get('country', None)
+        city = json['results'][0]['components'].get('city', None)
+        state = json['results'][0]['components'].get('state', None)
+        road = json['results'][0]['components'].get('road', None)
+        postcode = json['results'][0]['components'].get('postcode', None)
+        state_code = json['results'][0]['components'].get('state_code', None)
+        country_code = json['results'][0]['components'].get('country_code', None)
         event = Event(
             latitude=latitude,
             longitude=longitude,
             date=datetime.strptime(date, '%Y-%m-%d %H:%M'),
-            leader_id=leader_id
+            leader_id=leader_id,
+            country=country,
+            city=city,
+            state=state,
+            road=road,
+            postcode=postcode,
+            state_code=state_code,
+            country_code=country_code
         )
 
         db.session.add(event)
