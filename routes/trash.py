@@ -8,12 +8,23 @@ from detector_utils import load_inference_graph, load_image_into_numpy_array, re
 import tensorflow as tf
 import numpy as np
 
+import keras
+from keras.models import Model, load_model
+from keras.preprocessing import image as KerasImage
+import cv2
+
 
 TrashRoutes = Blueprint('TrashRoutes', __name__)
 
 detection_graph, session = load_inference_graph()
 MIN_THRESHOLD = 0.5
 
+prediction_list=['cardboard', 'glass', 'trash', 'paper', 'plastic', 'trash']
+
+# with CustomObjectScope({'relu6': ReLU,'DepthwiseConv2D': DepthwiseConv2D}):
+model=load_model('trained_model.h5')
+model._make_predict_function()
+labels={0: 'cardboard', 1: 'glass', 2: 'trash', 3: 'paper', 4: 'plastic', 5: 'trash'}
 
 @TrashRoutes.route('/trashAll/', methods=["GET"])
 def get_all_trash():
@@ -108,10 +119,35 @@ def scan_trash():
                 if score > MIN_THRESHOLD:
                     boxes.append(box)
 
-    for box in boxes:
+    # # crop all instances of trash
+    for i, box in enumerate(boxes):
+        ymin, xmin, ymax, xmax = box
+        im_width, im_height = image.size
+
+        ymin = max(0, ymin-0.1)
+        ymax = min(1, ymax+0.1)
+        xmin = max(0, xmin-0.1)
+        xmax = min(1, xmax+0.1)
+
+        left, right, top, bottom = xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height
+
+        zoomed_image = image.crop((left, top, right, bottom))
+
+        zoomed_image.save("zoom"+str(i)+".jpeg")
+
+        img = KerasImage.load_img("zoom"+str(i)+".jpeg", target_size=(300, 300))
+        x = KerasImage.img_to_array(img, dtype=np.uint8)
+        img=np.array(img)/255.0
+
+        p=model.predict(img[np.newaxis, ...])
+        pro=np.max(p[0], axis=-1)
+        print("prob",pro)
+        predicted_class = labels[np.argmax(p[0], axis=-1)]
+        print("classified label:",predicted_class)
+
         try:
             trash = Trash(
-                trash_type='trash',
+                trash_type=predicted_class,
                 latitude=latitude,
                 longitude=longitude
             )
