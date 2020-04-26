@@ -132,4 +132,21 @@ def join_event(event_id):
     return jsonify('User added successfully')
 
 
+@EventRoutes.route('/myEvents', methods=["GET"])
+@requires_auth
+def my_events():
+    user_id = current_user.id
+
+    try:
+        user = User.query.filter_by(id=user_id).first()
+    except Exception:
+        return 'User not found'
+
+    try:
+        events = Event.query.filter_by(user_id=user_id).all()
+        return jsonify([event.serialize() for event in events])
+    except Exception as e:
+        return str(e)
+
+
 
