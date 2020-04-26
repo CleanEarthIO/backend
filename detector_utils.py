@@ -4,19 +4,16 @@ from object_detection.utils import visualization_utils as vis_util
 import tensorflow as tf
 import numpy as np
 
-# import tensorflow.compat.v1 as tf
-# tf.disable_v2_behavior()
-
 def load_inference_graph():
     # load frozen tensorflow model into memory
     detection_graph = tf.Graph()
     with detection_graph.as_default():
-        od_graph_def = tf.GraphDef()
-        with tf.gfile.GFile('frozen_inference_graph.pb', 'rb') as fid:
+        od_graph_def = tf.compat.v1.GraphDef()
+        with tf.io.gfile.GFile('frozen_inference_graph.pb', 'rb') as fid:
             serialized_graph = fid.read()
             od_graph_def.ParseFromString(serialized_graph)
             tf.import_graph_def(od_graph_def, name='')
-        sess = tf.Session(graph=detection_graph)
+        sess = tf.compat.v1.Session(graph=detection_graph)
     return detection_graph, sess
 
 

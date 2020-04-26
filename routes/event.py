@@ -9,7 +9,7 @@ EventRoutes = Blueprint('EventRoutes', __name__)
 
 @EventRoutes.route('/events/', methods=["GET"])
 def get_events():
-    events = Event.query.all()
+    events = Event.query.filter(Event.date >= datetime.now())
     return jsonify([e.serialize() for e in events])
 
 
