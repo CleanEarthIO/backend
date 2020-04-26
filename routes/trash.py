@@ -1,4 +1,4 @@
-from flask import request, jsonify, abort, Blueprint
+from flask import request, jsonify, abort, Blueprint, send_from_directory
 from app import db
 from models import Trash
 from PIL import Image
@@ -29,10 +29,16 @@ model=load_model('trained_model.h5')
 model._make_predict_function()
 labels={0: 'cardboard', 1: 'glass', 2: 'trash', 3: 'paper', 4: 'plastic', 5: 'trash'}
 
+
 @TrashRoutes.route('/trashAll/', methods=["GET"])
 def get_all_trash():
     trash = Trash.query.all()
     return jsonify([t.serialize() for t in trash])
+
+
+@TrashRoutes.route('/uploads/<path:filename>', methods=["GET"])
+def uploads(filename):
+    return send_from_directory('uploads', filename)
 
 
 @TrashRoutes.route('/trash/<trash_id>', methods=["DELETE"])
