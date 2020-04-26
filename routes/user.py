@@ -32,8 +32,8 @@ def make_user():
         if p not in payload:
             return abort(400)
 
-    email = request.json['email']
-    name = request.json['name']
+    email = payload['email']
+    name = payload['name']
 
     user = User.query.filter_by(email=email).first()
     if user is not None:
