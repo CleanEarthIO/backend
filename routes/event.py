@@ -138,7 +138,7 @@ def leave_event(event_id):
             event_id=event_id
         ).first()
 
-        db.session.remove(eventuser)
+        db.session.delete(eventuser)
         db.session.commit()
     except Exception as e:
         return str(e)
