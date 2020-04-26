@@ -22,7 +22,7 @@ def get_user(user_id):
         return "User not found"
 
 
-@UserRoutes.route('/callback', methods=["POST"])
+@UserRoutes.route('/login', methods=["POST"])
 def make_user():
     if not request.json:
         return abort(400)
@@ -36,6 +36,10 @@ def make_user():
 
     email = request.json['email']
     name = request.json['name']
+
+    user = User.query.filter_by(email=email).first()
+    if user is not None:
+        return jsonify(user.serialize())
 
     try:
         user = User(
