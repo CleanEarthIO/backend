@@ -2,10 +2,7 @@ import json
 import jwt
 
 from flask import request
-from flask_login import login_user
-from functools import wraps
 from six.moves.urllib.request import urlopen
-from routes.user import User
 
 AUTH0_DOMAIN = 'dev-ca6857k2.auth0.com'
 API_AUDIENCE = '61RzFbSCgfe7vwyeFX2NydTvilxSm6R2'
@@ -81,12 +78,3 @@ def get_auth_payload():
     raise AuthError({"code": "invalid_header",
                      "description": "Unable to find appropriate key"}, 401)
 
-
-def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        payload = get_auth_payload()
-        user = User.query.filter_by(id=payload['email']).first()
-        login_user(user)
-        return f(*args, **kwargs)
-    return decorated

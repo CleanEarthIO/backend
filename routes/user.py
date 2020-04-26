@@ -2,7 +2,8 @@ from flask import request, jsonify, abort, Blueprint
 from app import db
 from models import User
 from auth import get_auth_payload
-
+from flask_login import login_user
+from functools import wraps
 
 UserRoutes = Blueprint('UserRoutes', __name__)
 
@@ -70,3 +71,13 @@ def add_points(point_id):
         return jsonify(user.serialize())
     except Exception as e:
         return str(e)
+
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        payload = get_auth_payload()
+        user = User.query.filter_by(id=payload['email']).first()
+        login_user(user)
+        return f(*args, **kwargs)
+    return decorated

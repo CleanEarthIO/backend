@@ -4,7 +4,7 @@ from models import User, Event, EventUsers
 from datetime import datetime
 from flask_login import current_user
 
-from auth import requires_auth
+from routes.user import requires_auth
 
 EventRoutes = Blueprint('EventRoutes', __name__)
 
