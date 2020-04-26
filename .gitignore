@@ -5,3 +5,4 @@ database.db
 .DS_Store
 *.jpg
 *.jpeg
+*.pb
