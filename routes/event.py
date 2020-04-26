@@ -1,7 +1,7 @@
 from flask import request, jsonify, abort, Blueprint
 from app import db
 from models import User, Event, EventUsers
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 from flask_login import current_user
 
@@ -16,7 +16,7 @@ tz = timezone('EST')
 
 @EventRoutes.route('/events/', methods=["GET"])
 def get_events():
-    events = Event.query.filter(Event.date >= datetime.now(tz))
+    events = Event.query.filter(Event.date >= datetime.now(tz)+timedelta(hours=1))
     return jsonify([e.serialize() for e in events])
 
 
