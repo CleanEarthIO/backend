@@ -111,13 +111,7 @@ def delete_event(event_id):
 @EventRoutes.route('/event/<event_id>', methods=["POST"])
 @requires_auth
 def join_event(event_id):
-    if not request.json:
-        return abort(400)
-
-    if 'user_id' not in request.json:
-        return abort(400)
-
-    user_id = request.json['user_id']
+    user_id = current_user.id
 
     try:
         user = User.query.filter_by(id=user_id).first()
