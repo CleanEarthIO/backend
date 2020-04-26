@@ -10,11 +10,7 @@ import numpy as np
 
 import keras
 from keras.models import Model, load_model
-from keras.applications import MobileNet
-from keras.applications.mobilenet import preprocess_input
 from keras.preprocessing import image as KerasImage
-from keras.utils.generic_utils import CustomObjectScope
-from keras.layers import DepthwiseConv2D, ReLU
 import cv2
 
 
@@ -23,8 +19,12 @@ TrashRoutes = Blueprint('TrashRoutes', __name__)
 detection_graph, session = load_inference_graph()
 MIN_THRESHOLD = 0.5
 
-prediction_list=['cardboard', 'glass', 'metal', 'paper', 'plastic', 'trash']
-model=load_model('model1.h5', custom_objects={'relu6': ReLU})
+prediction_list=['cardboard', 'glass', 'trash', 'paper', 'plastic', 'trash']
+
+# with CustomObjectScope({'relu6': ReLU,'DepthwiseConv2D': DepthwiseConv2D}):
+model=load_model('trained_model.h5')
+model._make_predict_function()
+labels={0: 'cardboard', 1: 'glass', 2: 'trash', 3: 'paper', 4: 'plastic', 5: 'trash'}
 
 @TrashRoutes.route('/trashAll/', methods=["GET"])
 def get_all_trash():
@@ -119,27 +119,17 @@ def scan_trash():
                 if score > MIN_THRESHOLD:
                     boxes.append(box)
 
-    for box in boxes:
-        try:
-            trash = Trash(
-                trash_type='trash',
-                latitude=latitude,
-                longitude=longitude
-            )
-            db.session.add(trash)
-            db.session.commit()
-        except Exception as e:
-            return str(e)
+    print("I AM HERE")
 
     # # crop all instances of trash
     for i, box in enumerate(boxes):
         ymin, xmin, ymax, xmax = box
         im_width, im_height = image.size
 
-        ymin = max(0, ymin-0.05)
-        ymax = min(1, ymax+0.05)
-        xmin = max(0, xmin-0.05)
-        xmax = min(1, xmax+0.05)
+        ymin = max(0, ymin-0.1)
+        ymax = min(1, ymax+0.1)
+        xmin = max(0, xmin-0.1)
+        xmax = min(1, xmax+0.1)
 
         left, right, top, bottom = xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height
 
@@ -147,19 +137,25 @@ def scan_trash():
 
         zoomed_image.save("zoom"+str(i)+".jpeg")
 
-        img = KerasImage.load_img("zoom"+str(i)+".jpeg", target_size=(224, 224))
-        x = KerasImage.img_to_array(img)
-        x = np.expand_dims(x, axis=0)
-        x = preprocess_input(x)
+        img = KerasImage.load_img("zoom"+str(i)+".jpeg", target_size=(300, 300))
+        x = KerasImage.img_to_array(img, dtype=np.uint8)
+        img=np.array(img)/255.0
 
-        pred_img = np.asarray(x)
-        
+        p=model.predict(img[np.newaxis, ...])
+        pro=np.max(p[0], axis=-1)
+        print("prob",pro)
+        predicted_class = labels[np.argmax(p[0], axis=-1)]
+        print("classified label:",predicted_class)
 
-        yo = model.predict(pred_img)
-        pred = prediction_list[np.argmax(yo)]
-
-        cv2.putText(img, pred, (10,1000), cv2.FONT_HERSHEY_SIMPLEX, 5, (0,0,0), 5, False)
-        name='img'+str(i)+'.png'
-        cv2.imwrite(os.path.join('prediction_images', name), img)
+        try:
+            trash = Trash(
+                trash_type=predicted_class,
+                latitude=latitude,
+                longitude=longitude
+            )
+            db.session.add(trash)
+            db.session.commit()
+        except Exception as e:
+            return str(e)
 
     return 'Processing'
