@@ -114,11 +114,6 @@ def join_event(event_id):
     user_id = current_user.id
 
     try:
-        user = User.query.filter_by(id=user_id).first()
-    except Exception:
-        return 'User not found'
-
-    try:
         eventuser = EventUsers(
             user_id=user_id,
             event_id=event_id
@@ -132,15 +127,29 @@ def join_event(event_id):
     return jsonify('User added successfully')
 
 
+@EventRoutes.route('/event/<event_id>', methods=["DELETE"])
+@requires_auth
+def leave_event(event_id):
+    user_id = current_user.id
+
+    try:
+        eventuser = EventUsers.query.filter_by(
+            user_id=user_id,
+            event_id=event_id
+        ).first()
+
+        db.session.remove(eventuser)
+        db.session.commit()
+    except Exception as e:
+        return str(e)
+
+    return jsonify('User removed successfully')
+
+
 @EventRoutes.route('/myEvents', methods=["GET"])
 @requires_auth
 def my_events():
     user_id = current_user.id
-
-    try:
-        user = User.query.filter_by(id=user_id).first()
-    except Exception:
-        return 'User not found'
 
     try:
         events = Event.query.filter_by(user_id=user_id).all()
