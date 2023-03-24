@@ -6,7 +6,7 @@ six
 flask_sqlalchemy
 flask-cors
 google-streetview
-tensorflow==1.14.0
+tensorflow==2.11.1
 keras==2.2.5
 pillow
 tensorflow-object-detection-api
